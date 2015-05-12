@@ -1,2 +1,2 @@
 # mindh2jsondh
-Export from a [[mindh]] data model to a JSON drill holes file.
+Python application to export from a [mindh data model](https://github.com/cokrzys/mindh) to a [JSON drillholes file](https://github.com/cokrzys/jsondh).
