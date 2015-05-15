@@ -54,6 +54,7 @@ class Mindhcollar:
 
     def read_downhole_surveys(self, connection):
     #------------------------------------------------------------------------------
+        del self.survey_list[:]
         sql = """
                 SELECT rowid, depth, azimuth, inclination
                 FROM dh.survey
