@@ -50,6 +50,31 @@ class Jsondh:
     num_holes_written = 0
     num_surveys_written = 0
 
+    def expand_box(self, max_depth):
+    #------------------------------------------------------------------------------
+        """
+        Expand the box so there is a buffer around the known area.
+        """
+        xy_factor = 0.05
+        z_factor = 0.05
+        self.boxMin.z -= max_depth
+        if self.boxMin.z == self.boxMax.z:
+            self.boxMin.z -= 10
+        if self.boxMin.x == self.boxMax.x:
+            self.boxMax.x += 10
+        if self.boxMin.y == self.boxMax.y:
+            self.boxMax.y += 10
+        d = (self.boxMax.x - self.boxMin.x) * xy_factor
+        self.boxMin.x -= d
+        self.boxMax.y += d
+        d = (self.boxMax.y - self.boxMin.y) * xy_factor
+        self.boxMin.y -= d
+        self.boxMax.y += d
+        d = (self.boxMax.z - self.boxMin.z) * z_factor
+        self.boxMin.z -= d
+        self.boxMax.z += d
+
+
     def write_header(self, json_file):
     #------------------------------------------------------------------------------
         """

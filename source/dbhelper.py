@@ -34,10 +34,10 @@
 import psycopg2
 import point3d
 
-def get_scalar_integer(connection, sql, default):
+def get_scalar_string(connection, sql, default = None):
     #------------------------------------------------------------------------------
     """
-    Get a scalar integer value from a PostgreSQL database.
+    Get a scalar string value from a PostgreSQL database.
     """
     ret = default
     try:
@@ -45,9 +45,31 @@ def get_scalar_integer(connection, sql, default):
         cur.execute(sql)
         row = cur.fetchone()
         if row != None:
-            ret = int(row[0])
+            ret = row[0]
     except psycopg2.DatabaseError, e:
         print 'ERROR: %s' % e
+    return ret
+
+def get_scalar_integer(connection, sql, default):
+    #------------------------------------------------------------------------------
+    """
+    Get a scalar integer value from a PostgreSQL database.
+    """
+    ret = default
+    str = get_scalar_string(connection, sql, None)
+    if str != None:
+        ret = int(str)
+    return ret
+
+def get_scalar_float(connection, sql, default):
+    #------------------------------------------------------------------------------
+    """
+    Get a scalar float value from a PostgreSQL database.
+    """
+    ret = default
+    str = get_scalar_string(connection, sql, None)
+    if str != None:
+        ret = float(str)
     return ret
 
 def get_point3d(connection, sql):

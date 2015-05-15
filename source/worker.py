@@ -66,6 +66,14 @@ class Worker:
         self.json.boxMin = db.get_point3d(self.con, sql)
         sql = self.get_box_sql('MAX')
         self.json.boxMax = db.get_point3d(self.con, sql)
+        sql = """
+                SELECT MAX(max_depth_meters)
+                FROM dh.collar WHERE rowid IN ({select})
+            """.format(select=self.selection)
+        max_depth = db.get_scalar_float(self.con, sql, 0.0)
+        self.json.expand_box(max_depth)
+        if self.verbose:
+            print "Maximum hole depth = %r" % max_depth
 
     def start_main_loop(self):
     #------------------------------------------------------------------------------
