@@ -67,6 +67,8 @@ parser.add_argument("-n", "--name", default="mindh2jsondh",
                     help="Project name, mindh2jsondh if not specified.")
 parser.add_argument("-desc", "--description",
                     help="Project description.")
+parser.add_argument("-a", "--analytes",
+                    help="A comma separated list of analytes.")
 parser.add_argument("-v", "--verbose", help="Verbose messages.", action="store_true")
 args = parser.parse_args()
 
@@ -78,6 +80,7 @@ if args.verbose:
     print "args.port = %r" % args.port
     print "args.username = %r" % args.username
     print "args.selection = %r" % args.selection
+    print "args.analytes = %r" % args.analytes
     print "args.crs = %r" % args.crs
     print "args.coordinate_decimals = %r" % args.coordinate_decimals
     print "args.name = %r" % args.name

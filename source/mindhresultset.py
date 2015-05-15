@@ -1,8 +1,8 @@
 """
 
-    point3d.py
+    mindhresultset.py
 
-    Contains a 3d point instance.
+    Contains a set of results from a mindh database.
 
     For more information see: https://github.com/cokrzys/mindh2jsondh
 
@@ -33,17 +33,43 @@
 
 import os
 import sys
+import mindhresult
 
-class Point3d:
+class Mindhresultset:
 
     def __init__(self):
     #------------------------------------------------------------------------------
-        self.x = 0.0
-        self.y = 0.0
-        self.z = 0.0
+        self.name = ''
+        self.results_list = []
 
-    def get_as_json_array(self, decimals = 2):
+    def read_results(self, connection, collar_rowid_fk):
     #------------------------------------------------------------------------------
-        return '[{:.{prec}f},{:.{prec}f},{:.{prec}f}]'.format(self.x, self.y, self.z, prec=decimals)
+        sql = """
+                SELECT start_depth, end_depth, MAX(norm_value)
+                FROM dh.result res
+                INNER JOIN ref.result_field field ON res.result_field_rowid_fk = field.rowid
+                WHERE res.collar_rowid_fk = {collar_rowid_fk}
+                  AND field.analyte_rowid_fk = (SELECT rowid FROM ref.analyte WHERE name = '{analyte}')
+                GROUP BY start_depth, end_depth
+            """.format(collar_rowid_fk=collar_rowid_fk, analyte=self.name)
+        # print "Reading results for %r" % self.name
+        #
+        # ----- open cursor and loop through the surveys
+        #
+        try:
+            cur = connection.cursor()
+            cur.execute(sql)
+            while True:
+                row = cur.fetchone()
+                if row == None:
+                    break
+                res = mindhresult.Mindhresult()
+                res.start_depth = int(row[0])
+                res.end_depth = float(row[1])
+                res.value = float(row[2])
+                self.results_list.append(res)
+        except psycopg2.DatabaseError, e:
+            print 'ERROR: %s' % e
+
 
 

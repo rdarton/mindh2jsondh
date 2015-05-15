@@ -33,6 +33,7 @@
 
 import os
 import sys
+import re
 import psycopg2
 import dbhelper as db
 import jsonfile
@@ -48,6 +49,7 @@ class Worker:
     selection = None
     verbose = False
     json_file = None
+    analytes_list = []
 
     def get_box_sql(self, func):
     #------------------------------------------------------------------------------
@@ -104,6 +106,9 @@ class Worker:
                 col.location.y = float(row[4])
                 col.location.z = float(row[5])
                 col.read_downhole_surveys(self.con)
+                col.add_dummy_surveys()
+                col.desurvey_straight_line()
+                col.read_assays(self.con, self.analytes_list)
                 self.json.write_hole(self.json_file, col)
         except psycopg2.DatabaseError, e:
             print 'ERROR: %s' % e
@@ -123,6 +128,15 @@ class Worker:
         self.json.description = args.description
         self.json.crs = args.crs
         self.json.coordinate_decimals = args.coordinate_decimals
+        #
+        # ----- analytes to export
+        #
+        # self.analytes_list = args.analytes.split(",")
+        self.analytes_list =re.split(r'[,\s]\s*', args.analytes)
+        if self.verbose:
+            print "%r analytes to export." % len(self.analytes_list)
+            for analyte in self.analytes_list:
+                print "Analyte = [%r]" % analyte
         #
         # ----- create output file and move on
         #

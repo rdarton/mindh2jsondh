@@ -1,8 +1,8 @@
 """
 
-    mindhsurvey.py
+    mindhresult.py
 
-    Contains a downhole survey from a mindh database.
+    Contains a downhole result from a mindh database.
 
     For more information see: https://github.com/cokrzys/mindh2jsondh
 
@@ -33,16 +33,14 @@
 
 import os
 import sys
-import point3d
 
-class Mindhsurvey:
+class Mindhresult:
 
     def __init__(self):
     #------------------------------------------------------------------------------
-        self.rowid = -1
-        self.depth = 0.0
-        self.azimuth = 0.0
-        self.inclination = 0.0
-        self.location = point3d.Point3d()
+        self.start_depth = 0.0
+        self.end_depth = 0.0
+        self.value = 0.0
+
 
 

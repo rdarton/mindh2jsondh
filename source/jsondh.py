@@ -40,15 +40,18 @@ import mindhcollar
 
 class Jsondh:
 
-    name = 'jsondh'
-    description = ''
-    version = 0.01
-    crs = 4326
-    coordinate_decimals = 6
-    boxMin = point3d.Point3d()
-    boxMax = point3d.Point3d()
-    num_holes_written = 0
-    num_surveys_written = 0
+    def __init__(self):
+    #------------------------------------------------------------------------------
+        self.name = 'jsondh'
+        self.description = ''
+        self.version = 0.01
+        self.crs = 4326
+        self.coordinate_decimals = 6
+        self.boxMin = point3d.Point3d()
+        self.boxMax = point3d.Point3d()
+        self.num_holes_written = 0
+        self.num_surveys_written = 0
+        self.num_assay_sets_written = 0
 
     def expand_box(self, max_depth):
     #------------------------------------------------------------------------------
@@ -122,7 +125,9 @@ class Jsondh:
         # json_file.write_label_and_int('id', survey.rowid)
         json_file.write_label_and_float('depth', survey.depth, 2)
         json_file.write_label_and_float('azimuth', survey.azimuth, 2)
-        json_file.write_label_and_float('inclination', survey.inclination, 2, False, False)
+        json_file.write_label_and_float('inclination', survey.inclination, 2)
+        json_file.write_label_and_objectstr('location', survey.location.get_as_json_array(self.coordinate_decimals),
+                                            False, False)
         json_file.decrease_indent()
         json_file.newline()
         json_file.end_object()
@@ -130,7 +135,7 @@ class Jsondh:
 
     def write_downhole_surveys(self, json_file, collar):
     #------------------------------------------------------------------------------
-        if len(collar.survey_list) > 0:
+        if len(collar.surveys_list) > 0:
             json_file.write_object_delimiter()
             json_file.newline()
             json_file.write_label('downholeSurveys')
@@ -138,8 +143,66 @@ class Jsondh:
             json_file.start_array()
             json_file.increase_indent()
             self.num_surveys_written = 0
-            for survey in collar.survey_list:
+            for survey in collar.surveys_list:
                 self.write_downhole_survey(json_file, survey)
+            json_file.decrease_indent()
+            json_file.newline()
+            json_file.end_array()
+
+    def write_results(self, json_file, results_list):
+    #------------------------------------------------------------------------------
+        if len(results_list) > 0:
+            num_written = 0
+            for result in results_list:
+                if num_written > 0:
+                    json_file.write_object_delimiter()
+                json_file.newline()
+                json_file.start_object()
+                json_file.write_label_and_float('from', result.start_depth, 2, True, False)
+                json_file.write_label_and_float('to', result.end_depth, 2, True, False)
+                json_file.write_label_and_float('value', result.value, 5, False, False)
+                json_file.end_object()
+                num_written += 1
+
+
+    def write_set_of_assays(self, json_file, assay):
+    #------------------------------------------------------------------------------
+        if self.num_assay_sets_written > 0:
+            json_file.write_object_delimiter()
+        json_file.newline()
+        json_file.start_object()
+        json_file.increase_indent()
+        json_file.newline()
+        # json_file.write_label_and_int('id', survey.rowid)
+        json_file.write_label_and_string('name', assay.name, True, True)
+        json_file.write_label('intervals')
+        json_file.newline()
+        if len(assay.results_list) > 0:
+            # json_file.write_object_delimiter()
+            # json_file.newline()
+            json_file.start_array()
+            json_file.increase_indent()
+            self.write_results(json_file, assay.results_list)
+            json_file.decrease_indent()
+            json_file.newline()
+            json_file.end_array()
+        json_file.decrease_indent()
+        json_file.newline()
+        json_file.end_object()
+        self.num_assay_sets_written += 1
+
+    def write_assays(self, json_file, collar):
+    #------------------------------------------------------------------------------
+        if len(collar.assays_list) > 0:
+            json_file.write_object_delimiter()
+            json_file.newline()
+            json_file.write_label('downholeDataValues')
+            json_file.newline()
+            json_file.start_array()
+            json_file.increase_indent()
+            self.num_assay_sets_written = 0
+            for assay in collar.assays_list:
+                self.write_set_of_assays(json_file, assay)
             json_file.decrease_indent()
             json_file.newline()
             json_file.end_array()
@@ -159,6 +222,7 @@ class Jsondh:
                                             collar.location.get_as_json_array(self.coordinate_decimals),
                                             False, False)
         self.write_downhole_surveys(json_file, collar)
+        self.write_assays(json_file, collar)
         json_file.decrease_indent()
         json_file.newline()
         json_file.end_object()

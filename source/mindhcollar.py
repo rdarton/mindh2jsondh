@@ -36,25 +36,21 @@ import sys
 import psycopg2
 import point3d
 import mindhsurvey
+import mindhresultset
 
 class Mindhcollar:
 
-    rowid = -1
-    name = ''
-    location = point3d.Point3d()
-    depth = 0.0
-    survey_list = []
-
-    def init(self):
+    def __init__(self):
     #------------------------------------------------------------------------------
         self.rowid = -1
         self.name = ''
-        self.location.zero()
+        self.location = point3d.Point3d()
         self.depth = 0.0
+        self.surveys_list = []
+        self.assays_list = []
 
     def read_downhole_surveys(self, connection):
     #------------------------------------------------------------------------------
-        del self.survey_list[:]
         sql = """
                 SELECT rowid, depth, azimuth, inclination
                 FROM dh.survey
@@ -76,7 +72,43 @@ class Mindhcollar:
                 svy.depth = float(row[1])
                 svy.azimuth = float(row[2])
                 svy.inclination = float(row[3])
-                self.survey_list.append(svy)
+                self.surveys_list.append(svy)
         except psycopg2.DatabaseError, e:
             print 'ERROR: %s' % e
+
+    def read_assays(self, connection, analytes_list):
+    #------------------------------------------------------------------------------
+        if len(analytes_list) > 0:
+            for analyte in analytes_list:
+                rs = mindhresultset.Mindhresultset()
+                rs.name = analyte
+                rs.read_results(connection, self.rowid)
+                self.assays_list.append(rs)
+
+    def add_dummy_surveys(self):
+    #------------------------------------------------------------------------------
+        #
+        # ----- add new survey at the top of the hole
+        #
+        if len(self.surveys_list) > 0 and self.surveys_list[0].depth != 0:
+            svy = mindhsurvey.Mindhsurvey()
+            svy.rowid = 0
+            svy.depth = 0.0
+            svy.azimuth = self.surveys_list[0].azimuth
+            svy.inclination = self.surveys_list[0].inclination
+            self.surveys_list.insert(0, svy)
+
+    def desurvey_straight_line(self):
+    #------------------------------------------------------------------------------
+        if len(self.surveys_list) > 0 and self.surveys_list[0].depth == 0:
+            self.surveys_list[0].location.x = self.location.x
+            self.surveys_list[0].location.y = self.location.y
+            self.surveys_list[0].location.z = self.location.z
+        if len(self.surveys_list) > 1 and self.surveys_list[1].depth == self.depth and self.surveys_list[1].inclination == -90:
+            self.surveys_list[1].location.x = self.location.x
+            self.surveys_list[1].location.y = self.location.y
+            self.surveys_list[1].location.z = self.location.z - float(self.depth)
+
+
+
 
