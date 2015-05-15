@@ -38,6 +38,7 @@ import dbhelper as db
 import jsonfile
 import jsondh
 import point3d
+import mindhcollar
 
 class Worker:
 
@@ -45,6 +46,8 @@ class Worker:
     con = None
     json = None
     selection = None
+    verbose = False
+    json_file = None
 
     def get_box_sql(self, func):
     #------------------------------------------------------------------------------
@@ -64,6 +67,38 @@ class Worker:
         sql = self.get_box_sql('MAX')
         self.json.boxMax = db.get_point3d(self.con, sql)
 
+    def start_main_loop(self):
+    #------------------------------------------------------------------------------
+        sql = """
+                SELECT rowid, name, max_depth_meters,
+                  ST_X(ST_Transform(geom, {crs})),
+                  ST_Y(ST_Transform(geom, {crs})),
+                  ST_Z(ST_Transform(geom, {crs}))
+                FROM dh.collar WHERE rowid IN ({select})
+            """.format(crs=self.json.crs, select=self.selection)
+        #
+        # ----- open cursor and loop through holes to export
+        #
+        try:
+            cur = self.con.cursor()
+            cur.execute(sql)
+            while True:
+                row = cur.fetchone()
+                if row == None:
+                    break
+                if self.verbose:
+                    print "Processing hole: %r" % row[1]
+                col = mindhcollar.Mindhcollar()
+                col.rowid = int(row[0])
+                col.name = row[1]
+                col.depth = row[2]
+                col.location.x = float(row[3])
+                col.location.y = float(row[4])
+                col.location.z = float(row[5])
+                col.read_downhole_surveys(self.con)
+                self.json.write_hole(self.json_file, col)
+        except psycopg2.DatabaseError, e:
+            print 'ERROR: %s' % e
 
     def start_export(self, args, connection):
     #------------------------------------------------------------------------------
@@ -74,7 +109,7 @@ class Worker:
             print "Starting export."
         self.con = connection
         self.selection = args.selection
-        self.crs = args.crs
+        self.verbose = args.verbose
         self.json = jsondh.Jsondh()
         self.json.name = args.name
         self.json.description = args.description
@@ -83,14 +118,21 @@ class Worker:
         #
         # ----- create output file and move on
         #
-        jf = jsonfile.Jsonfile()
-        jf.open(args.output_file)
+        self.json_file = jsonfile.Jsonfile()
+        self.json_file.open(args.output_file)
         #
-        #
+        # ----- project box and write header
         #
         self.read_project_box()
-        self.json.write_header(jf)
-        jf.close()
+        self.json.write_header(self.json_file)
+        self.json.start_holes_section(self.json_file)
+        #
+        # -----
+        #
+        self.start_main_loop()
+        self.json.end_holes_section(self.json_file)
+        self.json.write_footer(self.json_file)
+        self.json_file.close()
 
 
 

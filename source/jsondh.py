@@ -36,6 +36,7 @@ import sys
 import psycopg2
 import dbhelper as db
 import point3d
+import mindhcollar
 
 class Jsondh:
 
@@ -46,6 +47,8 @@ class Jsondh:
     coordinate_decimals = 6
     boxMin = point3d.Point3d()
     boxMax = point3d.Point3d()
+    num_holes_written = 0
+    num_surveys_written = 0
 
     def write_header(self, json_file):
     #------------------------------------------------------------------------------
@@ -61,7 +64,79 @@ class Jsondh:
         json_file.write_label_and_int('projectionEPSG', self.crs)
         json_file.write_label_and_objectstr('boxMin', self.boxMin.get_as_json_array(self.coordinate_decimals))
         json_file.write_label_and_objectstr('boxMax', self.boxMax.get_as_json_array(self.coordinate_decimals))
-        json_file.write_label_and_float('formatVersion', self.version, 2, False)
+        json_file.write_label_and_float('formatVersion', self.version, 2)
+
+    def write_footer(self, json_file):
+    #------------------------------------------------------------------------------
+        json_file.newline()
         json_file.decrease_indent()
         json_file.end_object()
         json_file.newline()
+
+    def start_holes_section(self, json_file):
+    #------------------------------------------------------------------------------
+        json_file.write_label('holes')
+        json_file.newline()
+        json_file.start_array()
+        json_file.increase_indent()
+
+    def end_holes_section(self, json_file):
+    #------------------------------------------------------------------------------
+        json_file.decrease_indent()
+        json_file.newline()
+        json_file.end_array()
+
+    def write_downhole_survey(self, json_file, survey):
+    #------------------------------------------------------------------------------
+        if self.num_surveys_written > 0:
+            json_file.write_object_delimiter()
+        json_file.newline()
+        json_file.start_object()
+        json_file.increase_indent()
+        json_file.newline()
+        # json_file.write_label_and_int('id', survey.rowid)
+        json_file.write_label_and_float('depth', survey.depth, 2)
+        json_file.write_label_and_float('azimuth', survey.azimuth, 2)
+        json_file.write_label_and_float('inclination', survey.inclination, 2, False, False)
+        json_file.decrease_indent()
+        json_file.newline()
+        json_file.end_object()
+        self.num_surveys_written += 1
+
+    def write_downhole_surveys(self, json_file, collar):
+    #------------------------------------------------------------------------------
+        if len(collar.survey_list) > 0:
+            json_file.write_object_delimiter()
+            json_file.newline()
+            json_file.write_label('downholeSurveys')
+            json_file.newline()
+            json_file.start_array()
+            json_file.increase_indent()
+            self.num_surveys_written = 0
+            for survey in collar.survey_list:
+                self.write_downhole_survey(json_file, survey)
+            json_file.decrease_indent()
+            json_file.newline()
+            json_file.end_array()
+
+    def write_hole(self, json_file, collar):
+    #------------------------------------------------------------------------------
+        if self.num_holes_written > 0:
+            json_file.write_object_delimiter()
+        json_file.newline()
+        json_file.start_object()
+        json_file.increase_indent()
+        json_file.newline()
+        json_file.write_label_and_int('id', collar.rowid)
+        json_file.write_label_and_string('name', collar.name)
+        json_file.write_label_and_float('depth', collar.depth, 2)
+        json_file.write_label_and_objectstr('location',
+                                            collar.location.get_as_json_array(self.coordinate_decimals),
+                                            False, False)
+        self.write_downhole_surveys(json_file, collar)
+        json_file.decrease_indent()
+        json_file.newline()
+        json_file.end_object()
+        self.num_holes_written += 1
+
+

@@ -78,10 +78,24 @@ class Jsonfile:
         self.write_indent()
         self.fh.write(self.del_object_end)
 
+    def start_array(self):
+    #------------------------------------------------------------------------------
+        self.write_indent()
+        self.fh.write(self.del_array_start)
+
+    def end_array(self):
+    #------------------------------------------------------------------------------
+        self.write_indent()
+        self.fh.write(self.del_array_end)
+
     def newline(self):
     #------------------------------------------------------------------------------
         self.fh.write(self.del_newline)
         self.at_beginning_of_line = True
+
+    def write_object_delimiter(self):
+    #------------------------------------------------------------------------------
+        self.fh.write(self.del_object)
 
     def write_indent(self):
     #------------------------------------------------------------------------------
