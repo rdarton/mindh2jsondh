@@ -87,8 +87,16 @@ class Mindhcollar:
 
     def add_dummy_surveys(self):
     #------------------------------------------------------------------------------
+        """
+        Create downhole survey points from the raw surveys.
+
+        Adds additional dummy surveys if needed at the top and bottom of the hole.  The dummy
+        surveys will have the same value at the next or previous survey at the top and bottom
+        of the hole respectively.  If no surveys exist for a drillhole a survey at the collar
+        and Td will be created with an azimuth of 0.0 and an inclination of -90.0 (vertical down).
+        """
         #
-        # ----- add new survey at the top of the hole
+        # ----- add new dummy survey at the top of the hole
         #
         if len(self.surveys_list) > 0 and self.surveys_list[0].depth != 0:
             svy = mindhsurvey.Mindhsurvey()
@@ -97,6 +105,33 @@ class Mindhcollar:
             svy.azimuth = self.surveys_list[0].azimuth
             svy.inclination = self.surveys_list[0].inclination
             self.surveys_list.insert(0, svy)
+        #
+        # ----- add new dummy survey at the end of the hole
+        #
+        if len(self.surveys_list) > 0 and self.surveys_list[len(self.surveys_list) - 1].depth != self.depth:
+            svy = mindhsurvey.Mindhsurvey()
+            svy.rowid = 0
+            svy.depth = self.depth
+            svy.azimuth = self.surveys_list[len(self.surveys_list) - 1].azimuth
+            svy.inclination = self.surveys_list[len(self.surveys_list) - 1].inclination
+            self.surveys_list.append(svy)
+        #
+        # ----- if no surveys assume vertical down
+        #
+        if len(self.surveys_list) == 0:
+            svy = mindhsurvey.Mindhsurvey()
+            svy.rowid = 0
+            svy.depth = 0.0
+            svy.azimuth = 0.0
+            svy.inclination = -90.0
+            self.surveys_list.append(svy)
+            svy = mindhsurvey.Mindhsurvey()
+            svy.rowid = 0
+            svy.depth = self.depth
+            svy.azimuth = 0.0
+            svy.inclination = -90.0
+            self.surveys_list.append(svy)
+
 
     def desurvey_straight_line(self):
     #------------------------------------------------------------------------------

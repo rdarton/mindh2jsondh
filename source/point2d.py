@@ -1,8 +1,8 @@
 """
 
-    point3d.py
+    point2d.py
 
-    Contains a 3d point instance.
+    Contains a 2d point instance.
 
     For more information see: https://github.com/cokrzys/mindh2jsondh
 
@@ -34,35 +34,22 @@
 import os
 import sys
 import math
-import point2d
 
-class Point3d:
+class Point2d:
 
     def __init__(self):
     #------------------------------------------------------------------------------
         self.x = 0.0
         self.y = 0.0
-        self.z = 0.0
 
     def get_as_json_array(self, decimals = 2):
     #------------------------------------------------------------------------------
-        return '[{:.{prec}f},{:.{prec}f},{:.{prec}f}]'.format(self.x, self.y, self.z, prec=decimals)
+        return '[{:.{prec}f},{:.{prec}f}]'.format(self.x, self.y, prec=decimals)
 
-    def azimuth_move(self, azimuth, inclination, distance):
+    def azimuth_move(self, azimuth, distance):
     #------------------------------------------------------------------------------
         if distance != 0.0:
-            dHorizDist = distance
-            dVertDist  = 0.0
-            pt = point2d.Point2d()
-            pt.x = self.x
-            pt.y = self.y
-            if inclination != 0.0:
-                dHorizDist = distance * math.cos(math.radians(inclination))
-                dVertDist  = distance * math.sin(math.radians(inclination))
-            pt.azimuth_move(azimuth, dHorizDist)
-            self.x = pt.z
-            self.y = pt.y
-            self.z += dVertDist
-
+            self.x += (distance * math.sin(math.radians(azimuth)))
+            self.y += (distance * math.cos(math.radians(azimuth)))
 
 
