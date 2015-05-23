@@ -33,6 +33,9 @@
 
 import os
 import sys
+from copy import deepcopy
+import mindhsurvey
+import point3d
 
 class Mindhresult:
 
@@ -41,6 +44,26 @@ class Mindhresult:
         self.start_depth = 0.0
         self.end_depth = 0.0
         self.value = 0.0
+        self.path = []
 
+    def desurvey(self, surveys_list):
+    #------------------------------------------------------------------------------
+        """
+        De-survey the interval by adding a 3D coordinate path that defines where
+        the interval is.  The path will typically be two points, but may be
+        multiple segments.
+        """
+        svy = mindhsurvey.Mindhsurvey()
+        start_location = svy.interpolate_location(surveys_list, self.start_depth)
+        end_location = svy.interpolate_location(surveys_list, self.end_depth)
+        if start_location != None and end_location != None:
+            start_index = svy.get_next_deepest_survey_index(surveys_list, self.start_depth)
+            end_index = svy.get_next_deepest_survey_index(surveys_list, self.start_depth)
+            self.path.append(start_location)
+            if start_index != end_index:
+                print 'DEBUG: Interval crossing survey points found from depth %r to %r' % \
+                      (self.start_depth, self.end_depth)
+                cur = start_index
+            self.path.append(end_location)
 
 

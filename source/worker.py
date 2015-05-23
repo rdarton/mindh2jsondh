@@ -62,6 +62,16 @@ class Worker:
             """.format(func=func, crs=self.json.crs, select=self.selection)
         return sql
 
+    def get_lat_long_sql(self, point):
+    #------------------------------------------------------------------------------
+        sql = """
+                SELECT
+                ST_X(ST_Transform(ST_SetSRID({pt}, {crs}), 4326)),
+                ST_Y(ST_Transform(ST_SetSRID({pt}, {crs}), 4326)),
+                ST_Z(ST_Transform(ST_SetSRID({pt}, {crs}), 4326))
+            """.format(pt=point, crs=self.json.crs)
+        return sql
+
     def read_project_box(self):
     #------------------------------------------------------------------------------
         sql = self.get_box_sql('MIN')
@@ -73,7 +83,17 @@ class Worker:
                 FROM dh.collar WHERE rowid IN ({select})
             """.format(select=self.selection)
         max_depth = db.get_scalar_float(self.con, sql, 0.0)
+        #
+        # ----- expand box so it's past the data extents
+        #
         self.json.expand_box(max_depth)
+        #
+        # ----- build box min/max in lat/long coordinates
+        #
+        sql = self.get_lat_long_sql(self.json.boxMin.get_as_makepoint(self.json.coordinate_decimals))
+        self.json.latLongMin = db.get_point3d(self.con, sql)
+        sql = self.get_lat_long_sql(self.json.boxMax.get_as_makepoint(self.json.coordinate_decimals))
+        self.json.latLongMax = db.get_point3d(self.con, sql)
         if self.verbose:
             print "Maximum hole depth = %r" % max_depth
 
@@ -105,10 +125,14 @@ class Worker:
                 col.location.x = float(row[3])
                 col.location.y = float(row[4])
                 col.location.z = float(row[5])
+                if self.json.zero_origin:
+                    col.location.subtract(self.json.shift)
                 col.read_downhole_surveys(self.con)
                 col.add_dummy_surveys()
+                col.check_surveys()
                 col.desurvey_midpoint_split()
                 col.read_assays(self.con, self.analytes_list)
+                col.desurvey_assays()
                 self.json.write_hole(self.json_file, col)
         except psycopg2.DatabaseError, e:
             print 'ERROR: %s' % e
@@ -128,6 +152,7 @@ class Worker:
         self.json.description = args.description
         self.json.crs = args.crs
         self.json.coordinate_decimals = args.coordinate_decimals
+        self.json.zero_origin = args.zero_origin
         #
         # ----- analytes to export
         #
@@ -146,10 +171,11 @@ class Worker:
         # ----- project box and write header
         #
         self.read_project_box()
+        self.json.setup_shift()
         self.json.write_header(self.json_file)
         self.json.start_holes_section(self.json_file)
         #
-        # -----
+        # ----- start the main loop to read and export data
         #
         self.start_main_loop()
         self.json.end_holes_section(self.json_file)

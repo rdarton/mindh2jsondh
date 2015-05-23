@@ -33,6 +33,7 @@
 
 import os
 import sys
+from copy import deepcopy
 import point3d
 
 class Mindhsurvey:
@@ -44,6 +45,37 @@ class Mindhsurvey:
         self.azimuth = 0.0
         self.inclination = 0.0
         self.location = point3d.Point3d()
+
+    def get_next_deepest_survey_index(self, surveys_list, depth):
+    #------------------------------------------------------------------------------
+        start_survey = 0
+        bracketed = False
+        while not bracketed and start_survey < len(surveys_list):
+            if depth <= surveys_list[start_survey].depth:
+                bracketed = True
+            else:
+                start_survey += 1
+        if not bracketed:
+            start_survey = -1
+            print 'ERROR: Could not get next deepest survey for depth %r.' % depth
+        return start_survey
+
+    def interpolate_location(self, surveys_list, depth):
+    #------------------------------------------------------------------------------
+        start_survey = self.get_next_deepest_survey_index(surveys_list, depth)
+        pt = None
+        if start_survey > 0:
+            if depth == surveys_list[start_survey].depth:
+                pt = deepcopy(surveys_list[start_survey].location)
+            else:
+                if start_survey > 0:
+                    pt = deepcopy(surveys_list[start_survey - 1].location)
+                    pt.azimuth_move(surveys_list[start_survey - 1].azimuth,
+                                    surveys_list[start_survey - 1].inclination,
+                                    depth - surveys_list[start_survey - 1].depth)
+                else:
+                    print 'ERROR: No prior survey to interpolate from for depth %r.' % depth
+        return pt
 
 
 

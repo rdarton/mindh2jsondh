@@ -85,7 +85,19 @@ class Mindhcollar:
                 rs = mindhresultset.Mindhresultset()
                 rs.name = analyte
                 rs.read_results(connection, self.rowid)
+                if rs.get_max_data_depth() > self.depth:
+                    print 'WARNING: Data below the Td for hole %r.' % self.name
                 self.assays_list.append(rs)
+
+    def desurvey_assays(self):
+    #------------------------------------------------------------------------------
+        """
+        De-survey the assay intervals by adding a 3D coordinate path to each
+        assay interval that defines where the interval is.  The path will
+        typically be two points, but may be multiple segments.
+        """
+        for assay in self.assays_list:
+            assay.desurvey(self.desurvey_list)
 
     def add_dummy_surveys(self):
     #------------------------------------------------------------------------------
@@ -167,6 +179,33 @@ class Mindhcollar:
                     svy.location.azimuth_move(svy.azimuth, svy.inclination, distance)
                     self.desurvey_list.append(svy)
 
+    def check_surveys(self):
+    #------------------------------------------------------------------------------
+        dramatic_azimuth_change = 30
+        dramatic_inclination_change = 30
+        if len(self.surveys_list) > 0:
+            #
+            # ----- loop through each survey
+            #
+            for i in range(0, len(self.surveys_list)):
+                if self.surveys_list[i].depth > self.depth:
+                    print 'WARNING: Surveys below the Td for hole %r.' % self.name
+                if i > 0:
+                    if abs(self.surveys_list[i].azimuth - self.surveys_list[i-1].azimuth) > dramatic_azimuth_change:
+                        print 'WARNING: Dramatic azimuth change in hole %r.' % self.name
+                    if abs(self.surveys_list[i].inclination - self.surveys_list[i-1].inclination) > dramatic_inclination_change:
+                        print 'WARNING: Dramatic inclination change in hole %r.' % self.name
+
+    def spans_survey(self, start_depth, end_depth):
+    #------------------------------------------------------------------------------
+        cur = 0
+        spans = False
+        while cur < len(self.desurvey_list):
+            if self.desurvey_list[cur].depth > start_depth and self.desurvey_list[cur].depth < end_depth:
+                spans = True
+            else:
+                cur += 1
+        return spans
 
 
 

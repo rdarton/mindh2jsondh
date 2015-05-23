@@ -34,6 +34,7 @@
 import os
 import sys
 import mindhresult
+import mindhsurvey
 
 class Mindhresultset:
 
@@ -51,6 +52,7 @@ class Mindhresultset:
                 WHERE res.collar_rowid_fk = {collar_rowid_fk}
                   AND field.analyte_rowid_fk = (SELECT rowid FROM ref.analyte WHERE name = '{analyte}')
                 GROUP BY start_depth, end_depth
+                ORDER BY start_depth, end_depth
             """.format(collar_rowid_fk=collar_rowid_fk, analyte=self.name)
         # print "Reading results for %r" % self.name
         #
@@ -67,9 +69,31 @@ class Mindhresultset:
                 res.start_depth = int(row[0])
                 res.end_depth = float(row[1])
                 res.value = float(row[2])
-                self.results_list.append(res)
+                if len(self.results_list) > 0 and res.start_depth < self.results_list[len(self.results_list) - 1].start_depth:
+                    print 'WARNING: Overlapping data dropped at start depth %r.' % res.start_depth
+                else:
+                    self.results_list.append(res)
         except psycopg2.DatabaseError, e:
             print 'ERROR: %s' % e
+
+    def get_max_data_depth(self):
+    #------------------------------------------------------------------------------
+        if len(self.results_list) > 0:
+            return self.results_list[len(self.results_list) - 1].end_depth
+        return 0.0
+
+    def desurvey(self, surveys_list):
+    #------------------------------------------------------------------------------
+        """
+        De-survey the assay intervals by adding a 3D coordinate path to each
+        assay interval that defines where the interval is.  The path will
+        typically be two points, but may be multiple segments.
+        """
+        for result in self.results_list:
+            result.desurvey(surveys_list)
+
+
+
 
 
 

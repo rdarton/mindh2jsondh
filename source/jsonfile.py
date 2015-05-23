@@ -138,6 +138,7 @@ class Jsonfile:
     def write_label_and_float(self, label, num, decimals, end_delimiter = True, newline = True):
     #------------------------------------------------------------------------------
         str = '{:.{prec}f}'.format(num, prec=decimals)
+        str = str.rstrip('0').rstrip('.') if '.' in str else str
         self.write_label(label)
         self.fh.write(str)
         self.write_delimit_and_end(end_delimiter, newline)

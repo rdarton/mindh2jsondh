@@ -48,6 +48,14 @@ class Point3d:
     #------------------------------------------------------------------------------
         return '[{:.{prec}f},{:.{prec}f},{:.{prec}f}]'.format(self.x, self.y, self.z, prec=decimals)
 
+    def get_as_makepoint(self, decimals = 2):
+    #------------------------------------------------------------------------------
+        """
+        Return a string formatted for the PostGIS ST_MakePoint().
+        For example: ST_MakePoint(305104.60,6617982.92,437.90)
+        """
+        return 'ST_MakePoint({:.{prec}f},{:.{prec}f},{:.{prec}f})'.format(self.x, self.y, self.z, prec=decimals)
+
     def azimuth_move(self, azimuth, inclination, distance):
     #------------------------------------------------------------------------------
         if distance != 0.0:
@@ -63,6 +71,12 @@ class Point3d:
             self.x = pt.x
             self.y = pt.y
             self.z += dVertDist
+
+    def subtract(self, offset):
+    #------------------------------------------------------------------------------
+        self.x = self.x - offset.x
+        self.y = self.y - offset.y
+        self.z = self.z - offset.z
 
 
 

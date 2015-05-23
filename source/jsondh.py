@@ -52,14 +52,18 @@ class Jsondh:
         self.num_holes_written = 0
         self.num_surveys_written = 0
         self.num_assay_sets_written = 0
+        self.zero_origin = False
+        self.shift = point3d.Point3d()
+        self.latLongMin = point3d.Point3d()
+        self.latLongMax = point3d.Point3d()
 
     def expand_box(self, max_depth):
     #------------------------------------------------------------------------------
         """
         Expand the box so there is a buffer around the known area.
         """
-        xy_factor = 0.05
-        z_factor = 0.05
+        xy_factor = 0.03
+        z_factor = 0.03
         self.boxMin.z -= max_depth
         if self.boxMin.z == self.boxMax.z:
             self.boxMin.z -= 10
@@ -77,6 +81,14 @@ class Jsondh:
         self.boxMin.z -= d
         self.boxMax.z += d
 
+    def setup_shift(self):
+    #------------------------------------------------------------------------------
+        if self.zero_origin:
+            self.shift.x = self.boxMin.x
+            self.shift.y = self.boxMin.y
+            self.boxMin.subtract(self.shift)
+            self.boxMax.subtract(self.shift)
+
 
     def write_header(self, json_file):
     #------------------------------------------------------------------------------
@@ -92,6 +104,10 @@ class Jsondh:
         json_file.write_label_and_int('projectionEPSG', self.crs)
         json_file.write_label_and_objectstr('boxMin', self.boxMin.get_as_json_array(self.coordinate_decimals))
         json_file.write_label_and_objectstr('boxMax', self.boxMax.get_as_json_array(self.coordinate_decimals))
+        if self.zero_origin:
+            json_file.write_label_and_objectstr('originShift', self.shift.get_as_json_array(self.coordinate_decimals))
+        json_file.write_label_and_objectstr('latLongMin', self.latLongMin.get_as_json_array(8))
+        json_file.write_label_and_objectstr('latLongMax', self.latLongMax.get_as_json_array(8))
         json_file.write_label_and_float('formatVersion', self.version, 2)
 
     def write_footer(self, json_file):
