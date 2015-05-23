@@ -4,3 +4,5 @@ source/.idea/.name
 *.xml
 
 source/.idea/source.iml
+
+source/deploy.sh

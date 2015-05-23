@@ -60,7 +60,7 @@ class Point3d:
                 dHorizDist = distance * math.cos(math.radians(inclination))
                 dVertDist  = distance * math.sin(math.radians(inclination))
             pt.azimuth_move(azimuth, dHorizDist)
-            self.x = pt.z
+            self.x = pt.x
             self.y = pt.y
             self.z += dVertDist
 

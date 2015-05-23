@@ -107,7 +107,7 @@ class Worker:
                 col.location.z = float(row[5])
                 col.read_downhole_surveys(self.con)
                 col.add_dummy_surveys()
-                col.desurvey_straight_line()
+                col.desurvey_midpoint_split()
                 col.read_assays(self.con, self.analytes_list)
                 self.json.write_hole(self.json_file, col)
         except psycopg2.DatabaseError, e:

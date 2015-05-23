@@ -33,6 +33,7 @@
 
 import os
 import sys
+from copy import deepcopy
 import psycopg2
 import point3d
 import mindhsurvey
@@ -48,6 +49,7 @@ class Mindhcollar:
         self.depth = 0.0
         self.surveys_list = []
         self.assays_list = []
+        self.desurvey_list = []
 
     def read_downhole_surveys(self, connection):
     #------------------------------------------------------------------------------
@@ -132,17 +134,43 @@ class Mindhcollar:
             svy.inclination = -90.0
             self.surveys_list.append(svy)
 
-
-    def desurvey_straight_line(self):
+    def desurvey_midpoint_split(self):
     #------------------------------------------------------------------------------
-        if len(self.surveys_list) > 0 and self.surveys_list[0].depth == 0:
-            self.surveys_list[0].location.x = self.location.x
-            self.surveys_list[0].location.y = self.location.y
-            self.surveys_list[0].location.z = self.location.z
-        if len(self.surveys_list) > 1 and self.surveys_list[1].depth == self.depth and self.surveys_list[1].inclination == -90:
-            self.surveys_list[1].location.x = self.location.x
-            self.surveys_list[1].location.y = self.location.y
-            self.surveys_list[1].location.z = self.location.z - float(self.depth)
+        del self.desurvey_list[:]
+        self.add_dummy_surveys()
+        if len(self.surveys_list) > 0:
+            #
+            # ----- start at the collar
+            #
+            svy = deepcopy(self.surveys_list[0])
+            svy.location = deepcopy(self.location)
+            self.desurvey_list.append(svy)
+            #
+            # ----- loop through each survey
+            #
+            for i in range(1, len(self.surveys_list)):
+                if self.surveys_list[i].azimuth == self.surveys_list[i-1].azimuth and self.surveys_list[i].inclination == self.surveys_list[i-1].inclination:
+                    distance = float(self.surveys_list[i].depth) - float(self.surveys_list[i-1].depth)
+                    svy = deepcopy(self.surveys_list[i])
+                    svy.location = deepcopy(self.desurvey_list[len(self.desurvey_list) - 1].location)
+                    svy.location.azimuth_move(svy.azimuth, svy.inclination, distance)
+                    self.desurvey_list.append(svy)
+                else:
+                    distance = float(self.surveys_list[i].depth - self.surveys_list[i-1].depth) / 2
+                    svy = deepcopy(self.surveys_list[i-1])
+                    svy.location = deepcopy(self.desurvey_list[len(self.desurvey_list) - 1].location)
+                    svy.location.azimuth_move(svy.azimuth, svy.inclination, distance)
+                    svy.depth = self.surveys_list[i].depth - distance
+                    self.desurvey_list.append(svy)
+                    svy = deepcopy(self.surveys_list[i])
+                    svy.location = deepcopy(self.desurvey_list[len(self.desurvey_list) - 1].location)
+                    svy.location.azimuth_move(svy.azimuth, svy.inclination, distance)
+                    self.desurvey_list.append(svy)
+
+
+
+
+
 
 
 

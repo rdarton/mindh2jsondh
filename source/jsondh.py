@@ -135,7 +135,7 @@ class Jsondh:
 
     def write_downhole_surveys(self, json_file, collar):
     #------------------------------------------------------------------------------
-        if len(collar.surveys_list) > 0:
+        if len(collar.desurvey_list) > 0:
             json_file.write_object_delimiter()
             json_file.newline()
             json_file.write_label('downholeSurveys')
@@ -143,7 +143,7 @@ class Jsondh:
             json_file.start_array()
             json_file.increase_indent()
             self.num_surveys_written = 0
-            for survey in collar.surveys_list:
+            for survey in collar.desurvey_list:
                 self.write_downhole_survey(json_file, survey)
             json_file.decrease_indent()
             json_file.newline()
