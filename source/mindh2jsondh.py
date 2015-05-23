@@ -70,6 +70,7 @@ parser.add_argument("-desc", "--description",
 parser.add_argument("-a", "--analytes",
                     help="A comma separated list of analytes.")
 parser.add_argument("-zo", "--zero_origin", help="Zero the origin, when set the bounding box minimum XY is set at 0,0 and the coordinates are shifted accordingly.", action="store_true")
+parser.add_argument("-m", "--minify", help="Minify the JSON.", action="store_true")
 parser.add_argument("-v", "--verbose", help="Verbose messages.", action="store_true")
 args = parser.parse_args()
 
@@ -87,6 +88,7 @@ if args.verbose:
     print "args.name = %r" % args.name
     print "args.description = %r" % args.description
     print "args.zero_origin = %r" % args.zero_origin
+    print "args.minify = %r" % args.minify
     print "args.verbose = %r" % args.verbose
 
 #

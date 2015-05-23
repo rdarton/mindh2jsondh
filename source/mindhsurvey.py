@@ -45,6 +45,7 @@ class Mindhsurvey:
         self.azimuth = 0.0
         self.inclination = 0.0
         self.location = point3d.Point3d()
+        self.is_raw = True
 
     def get_next_deepest_survey_index(self, surveys_list, depth):
     #------------------------------------------------------------------------------
@@ -64,7 +65,7 @@ class Mindhsurvey:
     #------------------------------------------------------------------------------
         start_survey = self.get_next_deepest_survey_index(surveys_list, depth)
         pt = None
-        if start_survey > 0:
+        if start_survey >= 0:
             if depth == surveys_list[start_survey].depth:
                 pt = deepcopy(surveys_list[start_survey].location)
             else:

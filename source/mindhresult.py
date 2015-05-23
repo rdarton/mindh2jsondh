@@ -41,10 +41,33 @@ class Mindhresult:
 
     def __init__(self):
     #------------------------------------------------------------------------------
+        """
+        Constructor.
+        """
         self.start_depth = 0.0
         self.end_depth = 0.0
         self.value = 0.0
         self.path = []
+
+    def get_path_as_json(self, decimals = 2):
+    #------------------------------------------------------------------------------
+        """
+        Get the desurveyed path of the interval as a JSON object.
+        Returns something like:
+        [[4199.39,33689.04,199.00],[4199.39,33689.04,195.00]]
+        Note that the path may have more than two points.
+        """
+        json = ''
+        delimiter = ''
+        if len(self.path) > 0:
+            json = '['
+            for p in self.path:
+                json += delimiter
+                json += p.get_as_json_array(decimals)
+                delimiter = ','
+            json += ']'
+        return json
+
 
     def desurvey(self, surveys_list):
     #------------------------------------------------------------------------------
@@ -54,16 +77,32 @@ class Mindhresult:
         multiple segments.
         """
         svy = mindhsurvey.Mindhsurvey()
+        #
+        # ----- interpolate XYZ at start and end depths of the interval
+        #
         start_location = svy.interpolate_location(surveys_list, self.start_depth)
         end_location = svy.interpolate_location(surveys_list, self.end_depth)
         if start_location != None and end_location != None:
+            #
+            # ----- get indexes to see if there are any intermediate surveys that are part of the path
+            #
             start_index = svy.get_next_deepest_survey_index(surveys_list, self.start_depth)
             end_index = svy.get_next_deepest_survey_index(surveys_list, self.start_depth)
+            #
+            # ----- build path including any intermediate points
+            #
             self.path.append(start_location)
             if start_index != end_index:
                 print 'DEBUG: Interval crossing survey points found from depth %r to %r' % \
                       (self.start_depth, self.end_depth)
                 cur = start_index
+                while cur < end_index:
+                    if surveys_list[cur].depth > self.start_depth and surveys_list[cur].depth < self.end_depth:
+                        pt = deepcopy(surveys_list[cur].location)
+                        self.path.append(pt)
+                    cur += 1
             self.path.append(end_location)
+        else:
+            print 'ERROR: Problem desurveying interval from %r to %r.' % (self.start_depth, self.end_depth)
 
 

@@ -118,6 +118,7 @@ class Mindhcollar:
             svy.depth = 0.0
             svy.azimuth = self.surveys_list[0].azimuth
             svy.inclination = self.surveys_list[0].inclination
+            svy.is_raw = False
             self.surveys_list.insert(0, svy)
         #
         # ----- add new dummy survey at the end of the hole
@@ -128,6 +129,7 @@ class Mindhcollar:
             svy.depth = self.depth
             svy.azimuth = self.surveys_list[len(self.surveys_list) - 1].azimuth
             svy.inclination = self.surveys_list[len(self.surveys_list) - 1].inclination
+            svy.is_raw = False
             self.surveys_list.append(svy)
         #
         # ----- if no surveys assume vertical down
@@ -138,12 +140,14 @@ class Mindhcollar:
             svy.depth = 0.0
             svy.azimuth = 0.0
             svy.inclination = -90.0
+            svy.is_raw = False
             self.surveys_list.append(svy)
             svy = mindhsurvey.Mindhsurvey()
             svy.rowid = 0
             svy.depth = self.depth
             svy.azimuth = 0.0
             svy.inclination = -90.0
+            svy.is_raw = False
             self.surveys_list.append(svy)
 
     def desurvey_midpoint_split(self):

@@ -39,6 +39,7 @@ class Jsonfile:
     fh = None
     filename = ''
     indent = ''
+    minify = False
     at_beginning_of_line = True
     del_object_start = '{'
     del_object_end = '}'
@@ -61,12 +62,13 @@ class Jsonfile:
 
     def increase_indent(self):
     #------------------------------------------------------------------------------
-        self.indent = self.indent + '  '
+        if not self.minify: self.indent = self.indent + '  '
 
     def decrease_indent(self):
     #------------------------------------------------------------------------------
-        if len(self.indent) >= 2:
-            self.indent = self.indent[:-2]
+        if not self.minify:
+            if len(self.indent) >= 2:
+                self.indent = self.indent[:-2]
 
     def start_object(self):
     #------------------------------------------------------------------------------
@@ -90,8 +92,9 @@ class Jsonfile:
 
     def newline(self):
     #------------------------------------------------------------------------------
-        self.fh.write(self.del_newline)
-        self.at_beginning_of_line = True
+        if not self.minify:
+            self.fh.write(self.del_newline)
+            self.at_beginning_of_line = True
 
     def write_object_delimiter(self):
     #------------------------------------------------------------------------------
@@ -114,7 +117,9 @@ class Jsonfile:
     def write_label(self, label):
     #------------------------------------------------------------------------------
         self.write_string(label)
-        self.fh.write(': ')
+        self.fh.write(':')
+        if not self.minify:
+            self.fh.write(' ')
 
     def write_delimit_and_end(self, end_delimiter = True, newline = True):
     #------------------------------------------------------------------------------

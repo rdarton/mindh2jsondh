@@ -166,6 +166,7 @@ class Worker:
         # ----- create output file and move on
         #
         self.json_file = jsonfile.Jsonfile()
+        self.json_file.minify = args.minify
         self.json_file.open(args.output_file)
         #
         # ----- project box and write header

@@ -50,7 +50,6 @@ class Jsondh:
         self.boxMin = point3d.Point3d()
         self.boxMax = point3d.Point3d()
         self.num_holes_written = 0
-        self.num_surveys_written = 0
         self.num_assay_sets_written = 0
         self.zero_origin = False
         self.shift = point3d.Point3d()
@@ -130,37 +129,44 @@ class Jsondh:
         json_file.newline()
         json_file.end_array()
 
-    def write_downhole_survey(self, json_file, survey):
+    def write_downhole_survey(self, json_file, survey, num_surveys_written, raw):
     #------------------------------------------------------------------------------
-        if self.num_surveys_written > 0:
+        if num_surveys_written > 0:
             json_file.write_object_delimiter()
         json_file.newline()
         json_file.start_object()
-        json_file.increase_indent()
-        json_file.newline()
-        # json_file.write_label_and_int('id', survey.rowid)
-        json_file.write_label_and_float('depth', survey.depth, 2)
-        json_file.write_label_and_float('azimuth', survey.azimuth, 2)
-        json_file.write_label_and_float('inclination', survey.inclination, 2)
-        json_file.write_label_and_objectstr('location', survey.location.get_as_json_array(self.coordinate_decimals),
-                                            False, False)
-        json_file.decrease_indent()
-        json_file.newline()
+        json_file.write_label_and_float('depth', survey.depth, 2, True, False)
+        json_file.write_label_and_float('azimuth', survey.azimuth, 2, True, False)
+        json_file.write_label_and_float('inclination', survey.inclination, 2, False, False)
+        if not raw:
+            json_file.write_object_delimiter()
+            json_file.write_label_and_objectstr('location',
+                                                survey.location.get_as_json_array(self.coordinate_decimals),
+                                                False, False)
         json_file.end_object()
         self.num_surveys_written += 1
 
-    def write_downhole_surveys(self, json_file, collar):
+    def write_downhole_surveys(self, json_file, label, surveys_list, raw):
     #------------------------------------------------------------------------------
-        if len(collar.desurvey_list) > 0:
+        num_surveys_written = 0
+        num_surveys_to_write = 0
+        if raw:
+            for survey in surveys_list:
+                if survey.is_raw: num_surveys_to_write += 1
+        else:
+            num_surveys_to_write = len(surveys_list)
+        if num_surveys_to_write > 0:
             json_file.write_object_delimiter()
             json_file.newline()
-            json_file.write_label('downholeSurveys')
+            json_file.write_label(label)
             json_file.newline()
             json_file.start_array()
             json_file.increase_indent()
             self.num_surveys_written = 0
-            for survey in collar.desurvey_list:
-                self.write_downhole_survey(json_file, survey)
+            for survey in surveys_list:
+                if (raw and survey.is_raw) or not raw:
+                    self.write_downhole_survey(json_file, survey, num_surveys_written, raw)
+                    num_surveys_written += 1
             json_file.decrease_indent()
             json_file.newline()
             json_file.end_array()
@@ -176,7 +182,9 @@ class Jsondh:
                 json_file.start_object()
                 json_file.write_label_and_float('from', result.start_depth, 2, True, False)
                 json_file.write_label_and_float('to', result.end_depth, 2, True, False)
-                json_file.write_label_and_float('value', result.value, 5, False, False)
+                json_file.write_label_and_float('value', result.value, 5, True, False)
+                json_file.write_label_and_objectstr('path', result.get_path_as_json(self.coordinate_decimals),
+                                                    False, False)
                 json_file.end_object()
                 num_written += 1
 
@@ -237,7 +245,8 @@ class Jsondh:
         json_file.write_label_and_objectstr('location',
                                             collar.location.get_as_json_array(self.coordinate_decimals),
                                             False, False)
-        self.write_downhole_surveys(json_file, collar)
+        self.write_downhole_surveys(json_file, 'rawDownholeSurveys', collar.surveys_list, True)
+        self.write_downhole_surveys(json_file, 'interpolatedDownholeSurveys', collar.desurvey_list, False)
         self.write_assays(json_file, collar)
         json_file.decrease_indent()
         json_file.newline()
