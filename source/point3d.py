@@ -44,9 +44,17 @@ class Point3d:
         self.y = 0.0
         self.z = 0.0
 
+    def get_str(self, val, decimals = 2):
+    #------------------------------------------------------------------------------
+        str = '{:.{prec}f}'.format(val, prec=decimals)
+        str = str.rstrip('0').rstrip('.') if '.' in str else str
+        return str
+
     def get_as_json_array(self, decimals = 2):
     #------------------------------------------------------------------------------
-        return '[{:.{prec}f},{:.{prec}f},{:.{prec}f}]'.format(self.x, self.y, self.z, prec=decimals)
+        return '[{x},{y},{z}]'.format(x=self.get_str(self.x, decimals),
+                                      y=self.get_str(self.y, decimals),
+                                      z=self.get_str(self.z, decimals))
 
     def get_as_makepoint(self, decimals = 2):
     #------------------------------------------------------------------------------

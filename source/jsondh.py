@@ -62,6 +62,7 @@ class Jsondh:
         self.latLongMin = point3d.Point3d()
         self.latLongMax = point3d.Point3d()
         self.analytes_list = []
+        self.trace_color = '#A0A0A0'
 
     def build_analytes_list(self, names, descriptions, colors):
     #------------------------------------------------------------------------------
@@ -191,8 +192,8 @@ class Jsondh:
             json_file.write_label_and_objectstr('originShift', self.shift.get_as_json_array(self.coordinate_decimals))
         json_file.write_label_and_objectstr('boxMin', self.boxMin.get_as_json_array(self.coordinate_decimals))
         json_file.write_label_and_objectstr('boxMax', self.boxMax.get_as_json_array(self.coordinate_decimals))
-        json_file.write_label_and_objectstr('latLongMin', self.latLongMin.get_as_json_array(8))
-        json_file.write_label_and_objectstr('latLongMax', self.latLongMax.get_as_json_array(8))
+        json_file.write_label_and_objectstr('longLatMin', self.latLongMin.get_as_json_array(8))
+        json_file.write_label_and_objectstr('longLatMax', self.latLongMax.get_as_json_array(8))
         json_file.write_label_and_string('desurveyMethod', self.desurvey_method)
         if len(self.analytes_list) > 0:
             self.write_analytes(json_file)
@@ -329,8 +330,11 @@ class Jsondh:
         json_file.write_label_and_int('id', collar.rowid)
         json_file.write_label_and_string('name', collar.name)
         json_file.write_label_and_float('depth', collar.depth, 2)
+        json_file.write_label_and_string('traceColor', self.trace_color)
         json_file.write_label_and_objectstr('location',
-                                            collar.location.get_as_json_array(self.coordinate_decimals),
+                                            collar.location.get_as_json_array(self.coordinate_decimals))
+        json_file.write_label_and_objectstr('longLat',
+                                            collar.lat_long.get_as_json_array(6),
                                             False, False)
         self.write_downhole_surveys(json_file, 'rawDownholeSurveys', collar.surveys_list, True)
         self.write_downhole_surveys(json_file, 'interpolatedDownholeSurveys', collar.desurvey_list, False)

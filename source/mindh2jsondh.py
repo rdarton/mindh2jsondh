@@ -77,6 +77,8 @@ parser.add_argument("-zo", "--zero_origin", help="Zero the origin, when set the 
 parser.add_argument("-m", "--minify", help="Minify the JSON.", action="store_true")
 parser.add_argument("-dsm", "--desurvey_method", default="MidpointSplit",
                     help="Desurvey method, the only valid option (and default) is MidpointSplit.")
+parser.add_argument("-tc", "--trace_color", default='#A0A0A0',
+                    help="Default color for the drillhole traces.")
 parser.add_argument("-v", "--verbose", help="Verbose messages.", action="store_true")
 args = parser.parse_args()
 
@@ -98,6 +100,7 @@ if args.verbose:
     print "args.desurvey_method = %r" % args.desurvey_method
     print "args.zero_origin = %r" % args.zero_origin
     print "args.minify = %r" % args.minify
+    print "args.trace_color = %r" % args.trace_color
     print "args.verbose = %r" % args.verbose
 
 #

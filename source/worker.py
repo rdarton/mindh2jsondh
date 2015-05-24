@@ -102,7 +102,10 @@ class Worker:
                 SELECT rowid, name, max_depth_meters,
                   ST_X(ST_Transform(geom, {crs})),
                   ST_Y(ST_Transform(geom, {crs})),
-                  ST_Z(ST_Transform(geom, {crs}))
+                  ST_Z(ST_Transform(geom, {crs})),
+                  ST_X(geom),
+                  ST_Y(geom),
+                  ST_Z(geom)
                 FROM dh.collar WHERE rowid IN ({select})
             """.format(crs=self.json.crs, select=self.selection)
         #
@@ -124,6 +127,9 @@ class Worker:
                 col.location.x = float(row[3])
                 col.location.y = float(row[4])
                 col.location.z = float(row[5])
+                col.lat_long.x = float(row[6])
+                col.lat_long.y = float(row[7])
+                col.lat_long.z = float(row[8])
                 if self.json.zero_origin:
                     col.location.subtract(self.json.shift)
                 col.read_downhole_surveys(self.con)
@@ -154,6 +160,7 @@ class Worker:
         self.json.zero_origin = args.zero_origin
         self.json.desurvey_method = args.desurvey_method
         self.json.num_holes_expected = num_holes
+        self.json.trace_color = args.trace_color
         #
         # ----- analytes to export
         #

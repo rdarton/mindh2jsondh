@@ -50,6 +50,7 @@ class Mindhcollar:
         self.surveys_list = []
         self.assays_list = []
         self.desurvey_list = []
+        self.lat_long = point3d.Point3d()
 
     def read_downhole_surveys(self, connection):
     #------------------------------------------------------------------------------
