@@ -86,8 +86,11 @@ class Mindhcollar:
                 rs = mindhresultset.Mindhresultset()
                 rs.name = analyte.name
                 rs.read_results(connection, self.rowid)
-                if rs.get_max_data_depth() > self.depth:
+                if float(rs.get_max_data_depth()) > float(self.depth):
                     print 'WARNING: Data below the Td for hole %r.' % self.name
+                    print '  Data at %r collar max depth %s.' % (rs.get_max_data_depth(), self.depth)
+                    diff = abs(rs.get_max_data_depth() - self.depth)
+                    print '  Absolute difference = %r' % '{:.{prec}f}'.format(diff, prec=10)
                 self.assays_list.append(rs)
 
     def desurvey_assays(self):

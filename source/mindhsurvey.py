@@ -52,7 +52,7 @@ class Mindhsurvey:
         start_survey = 0
         bracketed = False
         while not bracketed and start_survey < len(surveys_list):
-            if depth <= surveys_list[start_survey].depth:
+            if float(depth) <= float(surveys_list[start_survey].depth):
                 bracketed = True
             else:
                 start_survey += 1
