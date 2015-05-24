@@ -171,6 +171,7 @@ class Jsondh:
         json_file.decrease_indent()
         json_file.newline()
         json_file.end_array()
+        json_file.write_object_delimiter()
         json_file.newline()
 
     def write_header(self, json_file):
