@@ -33,10 +33,14 @@
 
 import os
 import sys
+import re
 import psycopg2
 import dbhelper as db
 import point3d
+import analyte
 import mindhcollar
+import StringIO
+from csv import reader
 
 class Jsondh:
 
@@ -44,17 +48,66 @@ class Jsondh:
     #------------------------------------------------------------------------------
         self.name = 'jsondh'
         self.description = ''
-        self.version = 0.01
+        self.version = 0.02
         self.crs = 4326
         self.coordinate_decimals = 6
+        self.desurvey_method = ''
         self.boxMin = point3d.Point3d()
         self.boxMax = point3d.Point3d()
+        self.num_holes_expected = 0
         self.num_holes_written = 0
         self.num_assay_sets_written = 0
         self.zero_origin = False
         self.shift = point3d.Point3d()
         self.latLongMin = point3d.Point3d()
         self.latLongMax = point3d.Point3d()
+        self.analytes_list = []
+
+    def build_analytes_list(self, names, descriptions, colors):
+    #------------------------------------------------------------------------------
+        """
+        """
+        #
+        # ----- first build list of names
+        #       names come in like this: "Au, As"
+        #
+        if names != None and len(names) > 0:
+            analytes_list = re.split(r'[,\s]\s*', names)
+            for name in analytes_list:
+                a = analyte.Analyte()
+                a.name = name
+                self.analytes_list.append(a)
+        #
+        # ----- add descriptions if they are there
+        #       descriptions are like this: "'Au (ppm)', 'As (ppm)'"
+        #
+        if descriptions != None and len(descriptions) > 0:
+            for line in reader(StringIO.StringIO(descriptions)):
+                part_num = 0
+                for part in line:
+                    if part_num < len(self.analytes_list):
+                        self.analytes_list[part_num].description = part.strip().strip("'")
+                    part_num += 1
+        #
+        # ----- add colors if there
+        #       colors come in like this: "#00FF00, #0000FF"
+        #
+        if colors != None and len(colors) > 0:
+            colors_list = re.split(r'[,\s]\s*', colors)
+            color_num = 0
+            for color in colors_list:
+                if color_num < len(self.analytes_list):
+                    self.analytes_list[color_num].color = color
+                color_num += 1
+
+    def show_analytes(self):
+    #------------------------------------------------------------------------------
+        """
+        """
+        print "%r analytes to export." % len(self.analytes_list)
+        for analyte in self.analytes_list:
+            print "Analyte = [%r], Description = [%r], Color = [%r]" % \
+                  (analyte.name, analyte.description, analyte.color)
 
     def expand_box(self, max_depth):
     #------------------------------------------------------------------------------
@@ -88,6 +141,37 @@ class Jsondh:
             self.boxMin.subtract(self.shift)
             self.boxMax.subtract(self.shift)
 
+    def write_analyte(self, json_file, analyte, num_written):
+    #------------------------------------------------------------------------------
+        if num_written > 0:
+            json_file.write_object_delimiter()
+        json_file.newline()
+        json_file.start_object()
+        json_file.newline()
+        json_file.increase_indent()
+        json_file.write_label_and_string('name', analyte.name)
+        json_file.write_label_and_string('description', analyte.description)
+        json_file.write_label_and_string('color', analyte.color, False, True)
+        json_file.decrease_indent()
+        json_file.end_object()
+
+    def write_analytes(self, json_file):
+    #------------------------------------------------------------------------------
+        """
+        Write the list of analytes.
+        """
+        json_file.write_label('analytes')
+        json_file.newline()
+        json_file.start_array()
+        json_file.increase_indent()
+        num_written = 0
+        for analyte in self.analytes_list:
+            self.write_analyte(json_file, analyte, num_written)
+            num_written += 1
+        json_file.decrease_indent()
+        json_file.newline()
+        json_file.end_array()
+        json_file.newline()
 
     def write_header(self, json_file):
     #------------------------------------------------------------------------------
@@ -100,13 +184,17 @@ class Jsondh:
         json_file.increase_indent()
         json_file.write_label_and_string('projectName', self.name)
         json_file.write_label_and_string('description', self.description)
+        json_file.write_label_and_int('numHoles', self.num_holes_expected)
         json_file.write_label_and_int('projectionEPSG', self.crs)
-        json_file.write_label_and_objectstr('boxMin', self.boxMin.get_as_json_array(self.coordinate_decimals))
-        json_file.write_label_and_objectstr('boxMax', self.boxMax.get_as_json_array(self.coordinate_decimals))
         if self.zero_origin:
             json_file.write_label_and_objectstr('originShift', self.shift.get_as_json_array(self.coordinate_decimals))
+        json_file.write_label_and_objectstr('boxMin', self.boxMin.get_as_json_array(self.coordinate_decimals))
+        json_file.write_label_and_objectstr('boxMax', self.boxMax.get_as_json_array(self.coordinate_decimals))
         json_file.write_label_and_objectstr('latLongMin', self.latLongMin.get_as_json_array(8))
         json_file.write_label_and_objectstr('latLongMax', self.latLongMax.get_as_json_array(8))
+        json_file.write_label_and_string('desurveyMethod', self.desurvey_method)
+        if len(self.analytes_list) > 0:
+            self.write_analytes(json_file)
         json_file.write_label_and_float('formatVersion', self.version, 2)
 
     def write_footer(self, json_file):
@@ -144,7 +232,6 @@ class Jsondh:
                                                 survey.location.get_as_json_array(self.coordinate_decimals),
                                                 False, False)
         json_file.end_object()
-        self.num_surveys_written += 1
 
     def write_downhole_surveys(self, json_file, label, surveys_list, raw):
     #------------------------------------------------------------------------------
@@ -162,7 +249,6 @@ class Jsondh:
             json_file.newline()
             json_file.start_array()
             json_file.increase_indent()
-            self.num_surveys_written = 0
             for survey in surveys_list:
                 if (raw and survey.is_raw) or not raw:
                     self.write_downhole_survey(json_file, survey, num_surveys_written, raw)

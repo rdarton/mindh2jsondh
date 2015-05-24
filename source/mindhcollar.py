@@ -83,7 +83,7 @@ class Mindhcollar:
         if len(analytes_list) > 0:
             for analyte in analytes_list:
                 rs = mindhresultset.Mindhresultset()
-                rs.name = analyte
+                rs.name = analyte.name
                 rs.read_results(connection, self.rowid)
                 if rs.get_max_data_depth() > self.depth:
                     print 'WARNING: Data below the Td for hole %r.' % self.name

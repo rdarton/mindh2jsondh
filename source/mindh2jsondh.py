@@ -69,8 +69,14 @@ parser.add_argument("-desc", "--description",
                     help="Project description.")
 parser.add_argument("-a", "--analytes",
                     help="A comma separated list of analytes.")
+parser.add_argument("-ad", "--analyte_descriptions",
+                    help="A comma separated list of analyte descriptions in the same order as the list of analytes.  Bracket individual descriptions in single quotes.")
+parser.add_argument("-ac", "--analyte_colors",
+                    help="A comma separated list of default colors for each analyte.  Colors are specified like as they are for CSS or HTML like #FF0000 for red.")
 parser.add_argument("-zo", "--zero_origin", help="Zero the origin, when set the bounding box minimum XY is set at 0,0 and the coordinates are shifted accordingly.", action="store_true")
 parser.add_argument("-m", "--minify", help="Minify the JSON.", action="store_true")
+parser.add_argument("-dsm", "--desurvey_method", default="MidpointSplit",
+                    help="Desurvey method, the only valid option (and default) is MidpointSplit.")
 parser.add_argument("-v", "--verbose", help="Verbose messages.", action="store_true")
 args = parser.parse_args()
 
@@ -83,10 +89,13 @@ if args.verbose:
     print "args.username = %r" % args.username
     print "args.selection = %r" % args.selection
     print "args.analytes = %r" % args.analytes
+    print "args.analyte_descriptions = %r" % args.analyte_descriptions
+    print "args.analyte_colors = %r" % args.analyte_colors
     print "args.crs = %r" % args.crs
     print "args.coordinate_decimals = %r" % args.coordinate_decimals
     print "args.name = %r" % args.name
     print "args.description = %r" % args.description
+    print "args.desurvey_method = %r" % args.desurvey_method
     print "args.zero_origin = %r" % args.zero_origin
     print "args.minify = %r" % args.minify
     print "args.verbose = %r" % args.verbose
@@ -116,7 +125,7 @@ if con:
     #
     if num_holes > 0:
         w = worker.Worker()
-        w.start_export(args, con);
+        w.start_export(args, con, num_holes);
     #
     # ----- close the database connection
     #

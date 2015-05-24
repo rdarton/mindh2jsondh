@@ -33,9 +33,9 @@
 
 import os
 import sys
-import re
 import psycopg2
 import dbhelper as db
+import analyte
 import jsonfile
 import jsondh
 import point3d
@@ -49,7 +49,6 @@ class Worker:
     selection = None
     verbose = False
     json_file = None
-    analytes_list = []
 
     def get_box_sql(self, func):
     #------------------------------------------------------------------------------
@@ -131,13 +130,13 @@ class Worker:
                 col.add_dummy_surveys()
                 col.check_surveys()
                 col.desurvey_midpoint_split()
-                col.read_assays(self.con, self.analytes_list)
+                col.read_assays(self.con, self.json.analytes_list)
                 col.desurvey_assays()
                 self.json.write_hole(self.json_file, col)
         except psycopg2.DatabaseError, e:
             print 'ERROR: %s' % e
 
-    def start_export(self, args, connection):
+    def start_export(self, args, connection, num_holes):
     #------------------------------------------------------------------------------
         """
         Start the data export.
@@ -153,15 +152,13 @@ class Worker:
         self.json.crs = args.crs
         self.json.coordinate_decimals = args.coordinate_decimals
         self.json.zero_origin = args.zero_origin
+        self.json.desurvey_method = args.desurvey_method
+        self.json.num_holes_expected = num_holes
         #
         # ----- analytes to export
         #
-        # self.analytes_list = args.analytes.split(",")
-        self.analytes_list =re.split(r'[,\s]\s*', args.analytes)
-        if self.verbose:
-            print "%r analytes to export." % len(self.analytes_list)
-            for analyte in self.analytes_list:
-                print "Analyte = [%r]" % analyte
+        self.json.build_analytes_list(args.analytes, args.analyte_descriptions, args.analyte_colors)
+        if self.verbose: self.json.show_analytes()
         #
         # ----- create output file and move on
         #
@@ -174,10 +171,10 @@ class Worker:
         self.read_project_box()
         self.json.setup_shift()
         self.json.write_header(self.json_file)
-        self.json.start_holes_section(self.json_file)
         #
         # ----- start the main loop to read and export data
         #
+        self.json.start_holes_section(self.json_file)
         self.start_main_loop()
         self.json.end_holes_section(self.json_file)
         self.json.write_footer(self.json_file)
