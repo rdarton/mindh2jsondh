@@ -46,6 +46,9 @@ class Point3d:
 
     def get_str(self, val, decimals = 2):
     #------------------------------------------------------------------------------
+        """
+        Get string version of the data.
+        """
         str = '{:.{prec}f}'.format(val, prec=decimals)
         str = str.rstrip('0').rstrip('.') if '.' in str else str
         return str
