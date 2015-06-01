@@ -82,6 +82,10 @@ class Point3d:
 
     def subtract(self, offset):
     #------------------------------------------------------------------------------
+        """
+        Subtract one point from another.
+
+        """
         self.x = self.x - offset.x
         self.y = self.y - offset.y
         self.z = self.z - offset.z
