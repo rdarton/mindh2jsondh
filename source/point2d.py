@@ -44,6 +44,10 @@ class Point2d:
 
     def get_as_json_array(self, decimals = 2):
     #------------------------------------------------------------------------------
+        """
+        Return the point as a JSON array, for example:
+        [1000.43,5000.91]
+        """
         return '[{:.{prec}f},{:.{prec}f}]'.format(self.x, self.y, prec=decimals)
 
     def azimuth_move(self, azimuth, distance):
