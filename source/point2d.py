@@ -48,6 +48,9 @@ class Point2d:
 
     def azimuth_move(self, azimuth, distance):
     #------------------------------------------------------------------------------
+        """
+        Move the point a specified distance and azimuth.
+        """
         if distance != 0.0:
             self.x += (distance * math.sin(math.radians(azimuth)))
             self.y += (distance * math.cos(math.radians(azimuth)))
